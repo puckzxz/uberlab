@@ -5,5 +5,4 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      WEBHOOK_URL:
       TOKEN:

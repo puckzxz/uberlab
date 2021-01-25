@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"time"
 
@@ -13,29 +10,14 @@ import (
 	"github.com/puckzxz/dismand"
 )
 
-type embedImage struct {
-	URL string `json:"url"`
-}
-
-type embed struct {
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Image       embedImage `json:"image"`
-}
-
-type webhookPayload struct {
-	Color int64   `json:"color"`
-	Embed []embed `json:"embeds"`
-}
-
-var webhookURL string = os.Getenv("WEBHOOK_URL")
-
 func labCommand(ctx *dismand.Context, args []string) {
 	c := colly.NewCollector()
-	embed := embed{}
+	embed := &disgord.Embed{}
 
 	c.OnHTML("#notesImg", func(e *colly.HTMLElement) {
-		embed.Image.URL = e.Attr("src")
+		embed.Image = &disgord.EmbedImage{
+			URL: e.Attr("src"),
+		}
 	})
 	c.OnHTML(".comment-content", func(e *colly.HTMLElement) {
 		embed.Description = fmt.Sprintf("```%s```", e.Text)
@@ -43,18 +25,9 @@ func labCommand(ctx *dismand.Context, args []string) {
 	c.Visit("https://www.poelab.com/wfbra/")
 
 	embed.Title = fmt.Sprintf("PoE Uber Lab -  %s", time.Now().Format("02-Jan-06"))
-	wp := webhookPayload{}
-	wp.Embed = append(wp.Embed, embed)
-	wp.Color = 4030808
+	embed.Color = 4030808
 
-	data, err := json.Marshal(wp)
-
-	if err != nil {
-		fmt.Printf("Error: %s", err.Error())
-		return
-	}
-
-	_, err = http.Post(webhookURL, "application/json", bytes.NewBuffer(data))
+	_, err := ctx.Client.SendMsg(ctx.Message.ChannelID, embed)
 
 	if err != nil {
 		fmt.Printf("Error: %s", err.Error())
