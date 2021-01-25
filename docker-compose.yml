@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  uberlab:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      WEBHOOK_URL:
+      TOKEN:
